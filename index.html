@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinanceBot — Your Personal Finance Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="passbook">
+
+    <!-- Cover / header -->
+    <header class="cover">
+      <div class="seal" id="seal">
+        <svg viewBox="0 0 100 100" class="seal-svg">
+          <circle cx="50" cy="50" r="47" class="seal-ring"/>
+          <circle cx="50" cy="50" r="38" class="seal-ring-inner"/>
+          <text x="50" y="60" class="seal-symbol">₹</text>
+        </svg>
+      </div>
+      <div class="cover-text">
+        <p class="eyebrow">Personal Ledger No. FB-2026</p>
+        <h1>FinanceBot</h1>
+        <p class="tagline">Ask. Understand. Decide with clarity.</p>
+      </div>
+      <button class="reset-btn" id="resetBtn" title="Start a fresh page">New page</button>
+    </header>
+
+    <!-- Ruled ledger / chat body -->
+    <main class="ledger" id="ledger">
+      <div class="ledger-columns">
+        <span>Entry</span>
+        <span>Detail</span>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="entry bot-entry">
+          <div class="entry-index">001</div>
+          <div class="entry-body">
+            <div class="entry-meta">
+              <span class="entry-tag">FinanceBot</span>
+              <span class="entry-time" data-time></span>
+            </div>
+            <p>Welcome. I can help you think through budgeting, taxes (old vs. new regime), PPF / ELSS / NPS / SIPs, credit scores, and everyday money decisions — with an eye on the Indian financial system.</p>
+            <p>What's on your mind today?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="suggestions" id="suggestions">
+        <button class="chip" data-q="Old regime vs new regime — which should I pick this year?">Old vs new tax regime</button>
+        <button class="chip" data-q="How should I split ₹50,000 a month using the 50-30-20 rule?">50-30-20 budgeting</button>
+        <button class="chip" data-q="PPF vs ELSS vs NPS — which is better for tax saving?">PPF vs ELSS vs NPS</button>
+        <button class="chip" data-q="How much emergency fund should I keep and where?">Emergency fund sizing</button>
+      </div>
+    </main>
+
+    <!-- Deposit-slip style input -->
+    <footer class="deposit-slip">
+      <div class="slip-label">Write your query below</div>
+      <form id="chatForm" autocomplete="off">
+        <input type="text" id="userInput" placeholder="e.g. Is SIP better than a lump-sum investment?" required />
+        <button type="submit" id="sendBtn">
+          <span class="btn-text">Post entry</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+      <p class="disclaimer">FinanceBot gives general educational information, not personalized investment advice.</p>
+    </footer>
+
+  </div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
