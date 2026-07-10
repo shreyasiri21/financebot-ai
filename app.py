@@ -1,6 +1,7 @@
 """
 FinanceBot - AI Personal Finance Chatbot
-Flask backend that integrates Anthropic's Claude API with a structured
+
+Flask backend that integrates the Groq API with a structured
 Indian personal-finance knowledge base for domain-specific Q&A.
 """
 
@@ -9,91 +10,137 @@ import json
 from datetime import datetime
 
 from flask import Flask, render_template, request, jsonify
-from groq import groq
+from groq import Groq
 
 app = Flask(__name__)
 
+
 # ---------------------------------------------------------------------------
-# Anthropic client
+# Groq client
 # ---------------------------------------------------------------------------
-# Set your key as an environment variable before running:
-#   export ANTHROPIC_API_KEY="sk-ant-..."          (mac/linux)
-#   setx ANTHROPIC_API_KEY "sk-ant-..."             (windows)
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-MODEL_NAME = "claude-sonnet-4-6"
+
+client = Groq(
+    api_key=os.environ.get("GROQ_API_KEY")
+)
+
+MODEL_NAME = "llama-3.1-8b-instant"
+
 
 # ---------------------------------------------------------------------------
 # Structured financial knowledge base
 # ---------------------------------------------------------------------------
-# This gives the model a grounded, India-specific frame of reference so
-# answers stay accurate and domain-specific rather than generic.
+
 FINANCE_KNOWLEDGE_BASE = {
     "tax_regimes": {
-        "old_regime": "Allows deductions under 80C (up to 1.5L), 80D (health "
-                       "insurance), HRA, home loan interest (24b), etc.",
-        "new_regime": "Lower slab rates, but most deductions/exemptions are "
-                       "not available (standard deduction of 75,000 for "
-                       "salaried individuals is allowed under the new regime).",
+        "old_regime": (
+            "Allows deductions under 80C up to 1.5 lakh, "
+            "80D health insurance, HRA and home-loan interest."
+        ),
+        "new_regime": (
+            "Provides lower tax slab rates, but most deductions and "
+            "exemptions are not available. A standard deduction may apply "
+            "for eligible salaried individuals."
+        ),
     },
+
     "investment_instruments": {
-        "PPF": "Public Provident Fund - 15 year lock-in, EEE tax status, "
-               "sovereign-backed, current rate revised quarterly.",
-        "ELSS": "Equity Linked Savings Scheme - mutual fund with 3 year "
-                "lock-in, qualifies for 80C, market-linked returns.",
-        "NPS": "National Pension System - retirement-focused, additional "
-               "80CCD(1B) deduction of 50,000 over and above 80C.",
-        "FD": "Fixed Deposit - guaranteed returns, interest is taxable as "
-              "per slab, useful for short-term capital protection.",
-        "SIP": "Systematic Investment Plan - disciplined periodic investing "
-               "into mutual funds, benefits from rupee-cost averaging.",
-        "SGB": "Sovereign Gold Bonds - government-backed gold exposure, "
-               "interest income plus tax-free capital gains on maturity.",
+        "PPF": (
+            "Public Provident Fund has a 15-year lock-in period, "
+            "government backing and tax benefits."
+        ),
+
+        "ELSS": (
+            "Equity Linked Savings Scheme is a mutual fund with a "
+            "3-year lock-in period and qualifies for Section 80C."
+        ),
+
+        "NPS": (
+            "National Pension System is a retirement-focused investment "
+            "scheme that may provide additional tax deductions."
+        ),
+
+        "FD": (
+            "Fixed Deposit provides relatively predictable returns, "
+            "but the interest earned is generally taxable."
+        ),
+
+        "SIP": (
+            "A Systematic Investment Plan allows periodic investment "
+            "into mutual funds and supports disciplined investing."
+        ),
+
+        "SGB": (
+            "Sovereign Gold Bonds provide government-backed exposure "
+            "to gold and may include interest income."
+        ),
     },
+
     "budgeting_frameworks": {
-        "50-30-20 rule": "50% needs, 30% wants, 20% savings/investments - a "
-                          "commonly used starting framework, adaptable to "
-                          "individual circumstances.",
-        "Emergency fund": "General guidance is 3-6 months of essential "
-                           "expenses kept in a liquid instrument like a "
-                           "savings account or liquid mutual fund.",
+        "50-30-20 rule": (
+            "A common budgeting framework that allocates 50% to needs, "
+            "30% to wants and 20% to savings or investments."
+        ),
+
+        "Emergency fund": (
+            "An emergency fund generally contains 3 to 6 months of "
+            "essential expenses in a liquid and accessible instrument."
+        ),
     },
+
     "credit": {
-        "CIBIL score": "Ranges 300-900, above 750 is generally considered "
-                        "healthy for loan/credit card approval.",
-        "credit_utilization": "Keeping usage below ~30% of the total credit "
-                               "limit is generally favorable for score health.",
+        "CIBIL score": (
+            "A CIBIL score ranges from 300 to 900. A score above 750 "
+            "is generally considered healthy."
+        ),
+
+        "credit_utilization": (
+            "Keeping credit usage below approximately 30% of the total "
+            "available limit may support a healthy credit score."
+        ),
     },
+
     "disclaimer": (
-        "FinanceBot provides general educational information about personal "
-        "finance concepts and is not a substitute for advice from a SEBI-"
-        "registered investment adviser or a qualified tax professional. "
-        "Figures like tax slabs and interest rates change; always verify "
-        "current values before acting."
+        "FinanceBot provides general educational information and is not "
+        "a substitute for advice from a SEBI-registered investment adviser "
+        "or qualified tax professional. Financial rules and rates may change."
     ),
 }
 
-SYSTEM_PROMPT = f"""You are FinanceBot, a conversational assistant focused
-exclusively on personal finance, with special depth in the Indian financial
-context (tax regimes, PPF/ELSS/NPS, UPI, CIBIL, mutual funds, insurance,
-budgeting).
 
-Ground your answers in this structured knowledge base where relevant:
+SYSTEM_PROMPT = f"""
+You are FinanceBot, a conversational assistant focused exclusively on
+personal finance, with special depth in the Indian financial context.
+
+You can answer questions about:
+
+- Budgeting
+- SIP and mutual funds
+- PPF, ELSS and NPS
+- Fixed deposits
+- Credit cards and CIBIL scores
+- Insurance
+- Loans
+- Tax basics
+- Emergency funds
+
+Use the following structured knowledge base when relevant:
+
 {json.dumps(FINANCE_KNOWLEDGE_BASE, indent=2)}
 
 Guidelines:
-- Give clear, contextual, domain-specific answers to financial questions.
-- Use concrete numbers/examples where useful (₹ amounts, %, timelines).
-- If a question is outside personal finance, politely redirect the user
-  back to finance topics.
-- Never give a definitive "you should buy X" recommendation for specific
-  stocks/instruments; frame guidance as general educational information and
-  suggest consulting a certified advisor for personalized decisions.
-- Keep responses concise and well-structured (short paragraphs / bullet
-  points), suited for a chat interface.
-- Default currency is INR (₹) unless the user specifies otherwise.
+
+- Give clear and domain-specific answers.
+- Use simple examples with INR amounts where useful.
+- If a question is outside personal finance, politely redirect the user.
+- Do not provide guaranteed investment-return claims.
+- Do not directly tell users to buy a particular stock.
+- Mention that personalized decisions should be discussed with a qualified adviser.
+- Keep answers concise and suitable for a chatbot.
+- Default currency is INR.
 """
 
-# In-memory conversation store, keyed by session id (simple demo storage)
+
+# In-memory conversation store
 conversations = {}
 
 
@@ -104,49 +151,88 @@ def index():
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
+
     user_message = (data.get("message") or "").strip()
     session_id = data.get("session_id", "default")
 
     if not user_message:
-        return jsonify({"error": "Empty message"}), 400
+        return jsonify({
+            "error": "Please enter a message."
+        }), 400
 
     history = conversations.setdefault(session_id, [])
-    history.append({"role": "user", "content": user_message})
+
+    history.append({
+        "role": "user",
+        "content": user_message
+    })
+
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT
+        }
+    ]
+
+    messages.extend(history[-20:])
 
     try:
-        response = client.messages.create(
+        response = client.chat.completions.create(
             model=MODEL_NAME,
+            messages=messages,
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=history[-20:],  # keep last 20 turns for context window
+            temperature=0.4
         )
-        reply_text = "".join(
-            block.text for block in response.content if block.type == "text"
-        )
-    except Exception as exc:  # pragma: no cover
-        return jsonify({"error": f"API error: {exc}"}), 500
 
-    history.append({"role": "assistant", "content": reply_text})
+        reply_text = response.choices[0].message.content
+
+    except Exception as exc:
+        print("Groq API error:", exc)
+
+        # Remove the unanswered user message
+        if history:
+            history.pop()
+
+        return jsonify({
+            "error": "FinanceBot is temporarily unavailable. Please try again."
+        }), 500
+
+    history.append({
+        "role": "assistant",
+        "content": reply_text
+    })
 
     return jsonify({
         "reply": reply_text,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow().isoformat()
     })
 
 
 @app.route("/api/reset", methods=["POST"])
 def reset():
-    session_id = (request.get_json(force=True) or {}).get("session_id", "default")
+    data = request.get_json(silent=True) or {}
+    session_id = data.get("session_id", "default")
+
     conversations.pop(session_id, None)
-    return jsonify({"status": "cleared"})
+
+    return jsonify({
+        "status": "cleared"
+    })
 
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({
+        "status": "ok"
+    })
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=True
+    )
