@@ -1,75 +1,171 @@
 # FinanceBot — AI Personal Finance Chatbot
 
-A conversational chatbot that answers personal finance questions using
-Claude (Anthropic API) grounded in a structured Indian personal-finance
-knowledge base. Built with Flask + vanilla HTML/CSS/JS ("passbook ledger"
-themed chat UI).
+FinanceBot is an AI-powered conversational chatbot that provides educational guidance on Indian personal finance topics such as budgeting, taxation, investments, credit scores, and savings. It combines a Large Language Model (LLM) with a structured financial knowledge base to deliver contextual and domain-specific responses.
 
 ## Features
-- NLP-driven contextual Q&A on budgeting, tax regimes, investment
-  instruments (PPF/ELSS/NPS/SIP/SGB/FD), credit scores, and emergency funds.
-- LLM-based response generation (Claude) layered on a structured knowledge
-  base for domain-specific, grounded answers.
-- Clean chat interface with quick-start question chips, typing indicator,
-  and session reset.
 
-## 1. Local setup
+- AI-powered conversational chatbot using the Groq API and Llama model.
+- Domain-specific financial assistance for:
+  - Budgeting
+  - Tax regimes
+  - SIP, PPF, ELSS, NPS, FD and SGB
+  - Credit scores (CIBIL)
+  - Emergency funds
+- Structured Indian personal-finance knowledge base for grounded responses.
+- User-friendly chat interface with:
+  - Typing indicator
+  - Session reset
+  - Passbook-style ledger UI
+- Secure API key management using environment variables.
+
+---
+
+## Technologies Used
+
+- Python
+- Flask
+- Groq API
+- Llama 3.1 Model
+- HTML
+- CSS
+- JavaScript
+- Render
+- GitHub
+
+---
+
+## Local Setup
+
+### Clone the repository
 
 ```bash
+git clone https://github.com/<your-username>/financebot.git
 cd financebot
-python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+```
 
-export ANTHROPIC_API_KEY="sk-ant-..."   # Windows: setx ANTHROPIC_API_KEY "sk-ant-..."
+### Create a virtual environment
+
+```bash
+python -m venv venv
+```
+
+Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Linux / macOS:
+
+```bash
+source venv/bin/activate
+```
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Configure the API Key
+
+Create an environment variable:
+
+Windows
+
+```bash
+setx GROQ_API_KEY "your_groq_api_key"
+```
+
+Linux/macOS
+
+```bash
+export GROQ_API_KEY="your_groq_api_key"
+```
+
+### Run the application
+
+```bash
 python app.py
 ```
 
-Visit `http://localhost:5000`.
+Open:
 
-## 2. Project structure
+```
+http://localhost:5000
+```
+
+---
+
+## Project Structure
 
 ```
 financebot/
-├── app.py                 # Flask backend + Claude API integration
+│
+├── app.py                 # Flask backend
 ├── requirements.txt
 ├── templates/
 │   └── index.html
-└── static/
-    ├── style.css
-    └── script.js
+├── static/
+│   ├── style.css
+│   └── script.js
+└── README.md
 ```
 
-## 3. Deploy to GitHub + Render (free tier)
+---
 
-1. **Push to GitHub**
-   ```bash
-   cd financebot
-   git init
-   git add .
-   git commit -m "FinanceBot: AI personal finance chatbot"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/financebot.git
-   git push -u origin main
-   ```
-   Make sure `.env` files or real API keys are never committed.
+## Deployment (Render)
 
-2. **Create the Render web service**
-   - Go to [render.com](https://render.com) → New → Web Service.
-   - Connect your GitHub repo.
-   - **Build command:** `pip install -r requirements.txt`
-   - **Start command:** `gunicorn app:app`
-   - **Environment variable:** `ANTHROPIC_API_KEY` = your key (Render → Environment tab).
-   - Deploy. Render will give you a live URL like `financebot.onrender.com`.
+### Push the project to GitHub
 
-3. **Resume-ready link:** once live, add the Render URL to your resume/portfolio
-   alongside this repo link.
+```bash
+git init
+git add .
+git commit -m "FinanceBot"
+git branch -M main
+git remote add origin https://github.com/<your-username>/financebot.git
+git push -u origin main
+```
 
-## 4. Notes for extending this project
+### Deploy on Render
 
-- Swap the in-memory `conversations` dict for Redis or a database if you
-  need persistence across restarts / multiple server instances.
-- Add authentication (e.g., Flask-Login) if you want per-user history.
-- Expand `FINANCE_KNOWLEDGE_BASE` in `app.py` with more instruments, tax
-  slabs, or region-specific rules as needed — the system prompt injects it
-  directly into every conversation.
+1. Create a new **Web Service**.
+2. Connect your GitHub repository.
+3. Build Command:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Start Command
+
+```bash
+gunicorn app:app
+```
+
+5. Add the following environment variable:
+
+```
+GROQ_API_KEY = your_groq_api_key
+```
+
+6. Deploy the application.
+
+---
+
+## Future Enhancements
+
+- User authentication
+- Expense tracking
+- EMI Calculator
+- SIP Calculator
+- Loan Eligibility Calculator
+- Personalized financial recommendations
+- Multi-language support
+- Voice-based interaction
+
+---
+
+## Disclaimer
+
+FinanceBot provides educational information about personal finance and should not be considered personalized financial, investment, or tax advice. Users should consult qualified financial professionals before making financial decisions.
